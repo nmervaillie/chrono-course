@@ -6,12 +6,20 @@ type Result = {
     elapsedSeconds: number;
 };
 
+type StartWave = {
+    id: string;
+    startedAt: string; // ISO
+    categories: string[];
+    genders: string[]; // codes en majuscule: H/F/X
+};
+
 type Race = {
     id: string;
     name: string; // = competition
-    startedAt: string | null; // ISO
+    startedAt: string | null; // départ général (optionnel)
     finished: boolean;
     results: Result[];
+    waves: StartWave[]; // vagues de départ
 };
 
 type Participant = {
@@ -39,7 +47,21 @@ type StoredState = {
     currentRaceId: string | null;
 };
 
-const STORAGE_KEY = "chrono-course-with-participants-v2";
+const STORAGE_KEY = "chrono-course-with-participants-v3";
+
+// Catégories / genres fixes
+const FIXED_CATEGORIES = [
+    "Mini-Poussin",
+    "Poussin",
+    "Pupille",
+    "Benjamin",
+    "Minime",
+    "Cadet",
+    "Junior",
+    "Senior",
+    "Master",
+];
+const FIXED_GENDERS = ["F", "H", "X"];
 
 function formatDuration(totalSeconds: number) {
     const hours = Math.floor(totalSeconds / 3600);
@@ -57,9 +79,20 @@ function loadInitialState(): StoredState {
     try {
         const raw = window.localStorage.getItem(STORAGE_KEY);
         if (!raw) return { races: [], participants: [], currentRaceId: null };
-        const parsed = JSON.parse(raw) as StoredState;
+        const parsed = JSON.parse(raw) as StoredState | any;
+
+        // Compat pour anciens formats
+        const races: Race[] = (parsed.races ?? []).map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            startedAt: r.startedAt ?? null,
+            finished: r.finished ?? false,
+            results: r.results ?? [],
+            waves: r.waves ?? [], // si ancien format sans waves, on part de []
+        }));
+
         return {
-            races: parsed.races ?? [],
+            races,
             participants: parsed.participants ?? [],
             currentRaceId: parsed.currentRaceId ?? null,
         };
@@ -191,6 +224,10 @@ function App() {
 
     const currentRace = races.find((r) => r.id === currentRaceId) || null;
 
+    // sélection pour une nouvelle vague de départ
+    const [waveCategories, setWaveCategories] = useState<string[]>([]);
+    const [waveGenders, setWaveGenders] = useState<string[]>([]);
+
     // Sauvegarde
     useEffect(() => {
         window.localStorage.setItem(
@@ -199,7 +236,7 @@ function App() {
         );
     }, [races, participants, currentRaceId]);
 
-    // Chrono temps réel
+    // Chrono temps réel (sur le départ général)
     useEffect(() => {
         if (!currentRace?.startedAt || currentRace.finished) return;
         const id = setInterval(() => setNowTs(Date.now()), 1000);
@@ -232,6 +269,7 @@ function App() {
                         startedAt: null,
                         finished: false,
                         results: [],
+                        waves: [],
                     }
                 );
             });
@@ -257,11 +295,21 @@ function App() {
         const t = new Date().toISOString();
         setRaces((prev) =>
             prev.map((r) =>
-                r.id === id ? { ...r, startedAt: t, finished: false, results: [] } : r
+                r.id === id
+                    ? {
+                        ...r,
+                        startedAt: t,
+                        finished: false,
+                        results: [],
+                        waves: [], // on repart de zéro
+                    }
+                    : r
             )
         );
         setDownloadMessage(null);
         setBibInput("");
+        setWaveCategories([]);
+        setWaveGenders([]);
         setNowTs(Date.now());
     }
 
@@ -282,6 +330,73 @@ function App() {
         window.localStorage.removeItem(STORAGE_KEY);
     }
 
+    // ---------------- DÉPARTS DÉCALÉS (VAGUES) ----------------
+
+    function toggleInArray(arr: string[], value: string): string[] {
+        return arr.includes(value)
+            ? arr.filter((v) => v !== value)
+            : [...arr, value];
+    }
+
+    function createWave() {
+        if (!currentRace) return;
+        if (currentRace.finished) {
+            alert("La course est terminée.");
+            return;
+        }
+        if (waveCategories.length === 0 && waveGenders.length === 0) {
+            alert("Sélectionner au moins une catégorie ou un genre.");
+            return;
+        }
+
+        const nowIso = new Date().toISOString();
+        const newWave: StartWave = {
+            id: uuid(),
+            startedAt: nowIso,
+            categories: [...waveCategories],
+            genders: waveGenders.map((g) => g.toUpperCase()),
+        };
+
+        setRaces((prev) =>
+            prev.map((r) =>
+                r.id === currentRace.id
+                    ? {
+                        ...r,
+                        waves: [...r.waves, newWave],
+                    }
+                    : r
+            )
+        );
+
+        // On garde ou on efface la sélection ? Je choisis de l'effacer
+        setWaveCategories([]);
+        setWaveGenders([]);
+    }
+
+    function getWaveStartForParticipant(race: Race, p: Participant): string | null {
+        const cat = p.teamCategory;
+        const g = (p.teamGender || "").toUpperCase();
+
+        // On parcourt les vagues dans l'ordre chronologique
+        const wavesSorted = race.waves
+            .slice()
+            .sort(
+                (a, b) =>
+                    new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()
+            );
+
+        for (const wave of wavesSorted) {
+            const matchCat = cat && wave.categories.includes(cat);
+            const matchGen = g && wave.genders.includes(g);
+            if (matchCat || matchGen) {
+                return wave.startedAt;
+            }
+        }
+
+        // sinon, départ général éventuel
+        return race.startedAt;
+    }
+
     // ---------------- ARRIVÉES ----------------
 
     function addArrival() {
@@ -300,12 +415,16 @@ function App() {
             return;
         }
 
-        if (!race.startedAt) {
-            alert(`La course "${race.name}" n'a pas commencé.`);
-            return;
-        }
         if (race.finished) {
             alert(`La course "${race.name}" est terminée.`);
+            return;
+        }
+
+        const startIso = getWaveStartForParticipant(race, part);
+        if (!startIso) {
+            alert(
+                `Aucune heure de départ définie pour cette course / groupe (vague correspondant ni départ général).`
+            );
             return;
         }
 
@@ -316,7 +435,7 @@ function App() {
         }
 
         const elapsed = Math.floor(
-            (Date.now() - new Date(race.startedAt).getTime()) / 1000
+            (Date.now() - new Date(startIso).getTime()) / 1000
         );
 
         const newRes: Result = {
@@ -420,7 +539,7 @@ function App() {
             .map((r) => {
                 const p = participants.find((pt) => pt.bibNumber === r.bibNumber);
                 const safe = (v: string | undefined) =>
-                    (v ?? "").replace(/"/g, '""'); // protection minimale
+                    (v ?? "").replace(/"/g, '""');
 
                 if (!p) {
                     return [
@@ -500,8 +619,7 @@ function App() {
         setDownloadMessage(`CSV téléchargé pour "${currentRace.name}".`);
     }
 
-    // ---------------- CLASSEMENT EN POPUP ----------------
-    // Classement général + podiums par catégorie/genre avec colonne "Général"
+    // ---------------- CLASSEMENT EN POPUP (inchangé) ----------------
 
     function openRankingPopup() {
         if (!currentRace) {
@@ -517,13 +635,11 @@ function App() {
         const dateStr = new Date().toLocaleDateString("fr-FR");
         const title = `Classement Course : ${currentRace.name} – ${dateStr}`;
 
-        // Map bib -> position au classement général
         const generalPositionByBib = new Map<string, number>();
         results.forEach((r, index) => {
             generalPositionByBib.set(r.bibNumber, index + 1);
         });
 
-        // Classement général (tableau complet)
         const generalRowsHtml = results
             .map((r, index) => {
                 const p = participants.find((x) => x.bibNumber === r.bibNumber);
@@ -541,19 +657,17 @@ function App() {
             })
             .join("");
 
-        // Participants de la course ayant un résultat
         const participantsInRace = participants.filter((p) =>
             results.some((r) => r.bibNumber === p.bibNumber)
         );
 
-        // Catégories distinctes
         const categories = Array.from(
             new Set(participantsInRace.map((p) => p.teamCategory).filter(Boolean))
         ).sort();
 
         type PodiumEntry = {
-            position: number;          // position dans la catégorie/genre (1,2,3)
-            generalPosition: number;   // position au classement général
+            position: number;
+            generalPosition: number;
             team: string;
             time: string;
         };
@@ -616,9 +730,9 @@ function App() {
                                 return `
               <tr>
                 <td style="border-bottom:1px solid #eee;padding:2px 6px;text-align:right;">${entry.position}</td>
-                <td style="border-bottom:1px solid #eee;padding:2px 6px;text-align:right;">${generalPos}</td>
                 <td style="border-bottom:1px solid #eee;padding:2px 6px;">${safeTeam}</td>
                 <td style="border-bottom:1px solid #eee;padding:2px 6px;text-align:right;">${entry.time}</td>
+                <td style="border-bottom:1px solid #eee;padding:2px 6px;text-align:right;">${generalPos}</td>
               </tr>
             `;
                             })
@@ -630,9 +744,9 @@ function App() {
                 <thead>
                   <tr>
                     <th style="border-bottom:1px solid #bbb;padding:2px 6px;text-align:right;">Pos</th>
-                    <th style="border-bottom:1px solid #bbb;padding:2px 6px;text-align:right;">Général</th>
                     <th style="border-bottom:1px solid #bbb;padding:2px 6px;text-align:left;">Équipe</th>
                     <th style="border-bottom:1px solid #bbb;padding:2px 6px;text-align:right;">Temps</th>
+                    <th style="border-bottom:1px solid #bbb;padding:2px 6px;text-align:right;">Général</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -920,8 +1034,8 @@ function App() {
                             </button>
                         </div>
                         <p style={{ fontSize: 11, marginTop: 4 }}>
-                            Le dossard détermine automatiquement la course via le fichier des
-                            participants.
+                            Le temps est calculé par rapport à la vague dont la catégorie ou le genre
+                            correspond, sinon au départ général.
                         </p>
                     </section>
 
@@ -949,13 +1063,14 @@ function App() {
                                         : "Course non démarrée"}
                                 </p>
                                 <p style={{ fontSize: 13, margin: "2px 0" }}>
-                                    Heure de départ : {formatStartTime(currentRace.startedAt)}
+                                    Départ général : {formatStartTime(currentRace.startedAt)}
                                 </p>
                                 <p style={{ fontSize: 13, margin: "2px 0 6px" }}>
-                                    Chrono : <strong>{raceChrono()}</strong>
+                                    Chrono (depuis départ général) :{" "}
+                                    <strong>{raceChrono()}</strong>
                                 </p>
 
-                                <div style={{ display: "flex", gap: 8 }}>
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                                     <button
                                         onClick={() => startRace(currentRace.id)}
                                         disabled={!!currentRace.startedAt && !currentRace.finished}
@@ -969,7 +1084,7 @@ function App() {
                                             cursor: "pointer",
                                         }}
                                     >
-                                        Démarrer / Redémarrer
+                                        Démarrer / Redémarrer (général)
                                     </button>
                                     <button
                                         onClick={() => stopRace(currentRace.id)}
@@ -986,6 +1101,136 @@ function App() {
                                     >
                                         Arrêter la course
                                     </button>
+                                </div>
+
+                                {/* Départs décalés */}
+                                <div
+                                    style={{
+                                        marginTop: 10,
+                                        paddingTop: 8,
+                                        borderTop: "1px dashed #ccc",
+                                        fontSize: 13,
+                                    }}
+                                >
+                                    <strong>Vagues de départ (catégories & genres)</strong>
+
+                                    <div
+                                        style={{
+                                            marginTop: 6,
+                                            display: "flex",
+                                            flexWrap: "wrap",
+                                            gap: 16,
+                                        }}
+                                    >
+                                        {/* Catégories */}
+                                        <div>
+                                            <div style={{ fontSize: 12, marginBottom: 4 }}>
+                                                Catégories :
+                                            </div>
+                                            {FIXED_CATEGORIES.map((cat) => (
+                                                <label
+                                                    key={cat}
+                                                    style={{ display: "block", fontSize: 12 }}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={waveCategories.includes(cat)}
+                                                        onChange={() =>
+                                                            setWaveCategories((prev) =>
+                                                                toggleInArray(prev, cat)
+                                                            )
+                                                        }
+                                                        style={{ marginRight: 4 }}
+                                                    />
+                                                    {cat}
+                                                </label>
+                                            ))}
+                                        </div>
+
+                                        {/* Genres */}
+                                        <div>
+                                            <div style={{ fontSize: 12, marginBottom: 4 }}>
+                                                Genres :
+                                            </div>
+                                            {FIXED_GENDERS.map((g) => (
+                                                <label
+                                                    key={g}
+                                                    style={{ display: "block", fontSize: 12 }}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={waveGenders.includes(g)}
+                                                        onChange={() =>
+                                                            setWaveGenders((prev) => toggleInArray(prev, g))
+                                                        }
+                                                        style={{ marginRight: 4 }}
+                                                    />
+                                                    {g}
+                                                </label>
+                                            ))}
+                                        </div>
+
+                                        {/* Bouton vague */}
+                                        <div style={{ alignSelf: "flex-end" }}>
+                                            <button
+                                                onClick={createWave}
+                                                style={{
+                                                    padding: "4px 8px",
+                                                    borderRadius: 4,
+                                                    border: "none",
+                                                    backgroundColor: "#444",
+                                                    color: "#fff",
+                                                    fontSize: 12,
+                                                    cursor: "pointer",
+                                                    marginTop: 8,
+                                                }}
+                                            >
+                                                Lancer le départ pour cette sélection
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Liste des vagues */}
+                                    {currentRace.waves.length > 0 && (
+                                        <div style={{ marginTop: 8 }}>
+                                            <div style={{ fontSize: 12, marginBottom: 4 }}>
+                                                Vagues enregistrées :
+                                            </div>
+                                            <ul
+                                                style={{
+                                                    margin: 0,
+                                                    paddingLeft: 16,
+                                                    fontSize: 12,
+                                                    maxHeight: 120,
+                                                    overflowY: "auto",
+                                                }}
+                                            >
+                                                {currentRace.waves
+                                                    .slice()
+                                                    .sort(
+                                                        (a, b) =>
+                                                            new Date(a.startedAt).getTime() -
+                                                            new Date(b.startedAt).getTime()
+                                                    )
+                                                    .map((w, idx) => (
+                                                        <li key={w.id}>
+                                                            Vague {idx + 1} –{" "}
+                                                            {formatStartTime(w.startedAt)} –{" "}
+                                                            {w.categories.length > 0 && (
+                                                                <>
+                                                                    Cat: {w.categories.join(", ")}{" "}
+                                                                </>
+                                                            )}
+                                                            {w.genders.length > 0 && (
+                                                                <>
+                                                                    Genres: {w.genders.join(", ")}
+                                                                </>
+                                                            )}
+                                                        </li>
+                                                    ))}
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                             </section>
 
