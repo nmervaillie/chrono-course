@@ -1,5 +1,27 @@
-bib,name,category,gender,race
-1,team 1,master,H,xs
-2,team 2,master,M,xs
-3,team 3,master,M,10-14
-4,team 4,senior,F,xs
+bib,competition,teamName,teamGender,teamCategory,nameParticipant1,genderParticipant1,birthDateParticipant1,clubParticipant1,licenseParticipant1,nameParticipant2,genderParticipant2,birthDateParticipant2,clubParticipant2,licenseParticipant2,teamFullName
+1,6-9,Antilopes Agiles,X,Poussin,Alice,F,12/06/2017,TriClub A,A001,André,M,03/03/2016,TriTeam A,A002,Antilopes Agiles - Alice (TriClub A) - André (TriTeam A)
+2,6-9,Bisons Bondissants,X,Mini-Poussin,Bruno,M,14/08/2019,Endurance B,B010,Bianca,F,22/04/2018,Vélo Club B,B011,Bisons Bondissants - Bruno (Endurance B) - Bianca (Vélo Club B)
+3,6-9,Chèvres Courageuses,X,Poussin,Chloé,F,27/01/2017,Nordic C,C020,Cyril,M,19/10/2016,Athlé C,C021,Chèvres Courageuses - Chloé (Nordic C) - Cyril (Athlé C)
+4,6-9,Dauphins Dynamiques,X,Poussin,David,M,08/11/2016,TriClub D,D100,Diane,F,29/05/2017,TriClub D,D101,Dauphins Dynamiques - David (TriClub D) - Diane (TriClub D)
+5,6-9,Écureuils Élancés,X,Poussin,Emma,F,03/02/2016,Team E,E050,Ethan,M,11/09/2017,Team E,E051,Écureuils Élancés - Emma (Team E) - Ethan (Team E)
+6,10-15,Faucons Fuyants,X,Pupille,Félix,M,17/07/2014,Montagne F,F300,Flora,F,20/12/2015,Montagne F,F301,Faucons Fuyants - Félix (Montagne F) - Flora (Montagne F)
+7,10-15,Gorilles Gracieux,X,Pupille,Gabriel,M,05/04/2015,TriG,G101,Gaëlle,F,09/01/2014,TriG,G102,Gorilles Gracieux - Gabriel (TriG) - Gaëlle (TriG)
+8,10-15,Hippocampes Hâtifs,X,Pupille,Hugo,M,12/10/2014,Sport H,H201,Héloïse,F,06/03/2015,Sport H,H202,Hippocampes Hâtifs - Hugo (Sport H) - Héloïse (Sport H)
+9,10-15,Ibis Intrépides,X,Pupille,Inès,F,28/02/2014,I-Club,I009,Isaac,M,14/06/2015,I-Club,I010,Ibis Intrépides - Inès (I-Club) - Isaac (I-Club)
+10,10-15,Jaguars Joyeux,X,Pupille,Julien,M,30/01/2015,J-Tri,J888,Jade,F,30/11/2014,J-Tri,J889,Jaguars Joyeux - Julien (J-Tri) - Jade (J-Tri)
+11,XS,Kangourous Kinetiques,X,Cadet,Kevin,M,15/05/2009,K-Tri,K111,Karine,F,21/02/2008,K-Tri,K112,Kangourous Kinetiques - Kevin (K-Tri) - Karine (K-Tri)
+12,XS,Lions Lumineux,X,Junior,Léa,F,09/04/2007,L-Tri,L210,Louis,M,19/07/2006,L-Tri,L211,Lions Lumineux - Léa (L-Tri) - Louis (L-Tri)
+13,XS,Mouflons Magiques,M,Senior,Marc,M,13/03/1995,M-Tri,M321,Mathieu,M,07/08/1992,M-Tri,M322,Mouflons Magiques - Marc (M-Tri) - Mathieu (M-Tri)
+14,XS,Narvals Nocturnes,X,Senior,Nina,F,25/09/1994,N-Tri,N015,Noé,M,18/12/1993,N-Tri,N016,Narvals Nocturnes - Nina (N-Tri) - Noé (N-Tri)
+15,XS,Orques Obstinés,X,Master,Olivier,M,28/02/1985,O-Club,O777,Océane,F,02/10/1982,O-Club,O778,Orques Obstinés - Olivier (O-Club) - Océane (O-Club)
+16,XS,Pigeons Pantouflards,F,Senior,Pauline,F,01/02/1990,VATriathlon,X1234,Pascale,F,02/01/1989,Les Weppes Triathlon,Z4567,Pigeons Pantouflards - Pauline (VATriathlon) - Pascale (Les Weppes Triathlon)
+17,XS,Quokkas Querelleurs,M,Senior,Quentin,M,15/06/1993,Q-Tri Club,Q100,Quentin2,M,09/09/1991,Q-Tri Club,Q101,Quokkas Querelleurs - Quentin (Q-Tri Club) - Quentin2 (Q-Tri Club)
+18,10-15,Renardes Rapides,F,Pupille,Roxane,F,04/05/2014,R-Tri Jeunes,R201,Romane,F,22/11/2015,R-Tri Jeunes,R202,Renardes Rapides - Roxane (R-Tri Jeunes) - Romane (R-Tri Jeunes)
+19,10-15,Renards Rugissants,M,Pupille,Rémi,M,10/03/2015,Racing R,R301,Raphaël,M,27/07/2014,Racing R,R302,Renards Rugissants - Rémi (Racing R) - Raphaël (Racing R)
+20,6-9,Sirènes Souriantes,F,Poussin,Sarah,F,19/01/2017,S-Club Jeunes,S010,Sonia,F,08/06/2016,S-Club Jeunes,S011,Sirènes Souriantes - Sarah (S-Club Jeunes) - Sonia (S-Club Jeunes)
+21,6-9,Serpents Sprinteurs,M,Poussin,Samuel,M,23/09/2016,Sprint S,S110,Simon,M,30/12/2017,Sprint S,S111,Serpents Sprinteurs - Samuel (Sprint S) - Simon (Sprint S)
+22,XS,Tigresses Tenaces,F,Master,Tania,F,05/04/1981,TriTiger,T500,Thérèse,F,16/01/1979,TriTiger,T501,Tigresses Tenaces - Tania (TriTiger) - Thérèse (TriTiger)
+23,10-15,Urus Ultrarapides,X,Benjamin,Ulysse,M,14/03/2013,U-Club,U200,Uranie,F,29/09/2012,U-Club,U201,Urus Ultrarapides - Ulysse (U-Club) - Uranie (U-Club)
+24,XS,Vautours Véloce,M,Minime,Valentin,M,07/11/2010,V-Tri,V300,Vincent,M,18/08/2011,V-Tri,V301,Vautours Véloce - Valentin (V-Tri) - Vincent (V-Tri)
+25,XS,Walabis Vaillants,F,Cadet,Wendy,F,22/06/2008,W-Tri,W001,Wanda,F,04/01/2009,W-Tri,W002,Walabis Vaillants - Wendy (W-Tri) - Wanda (W-Tri)
+26,XS,Xylophages Xeniaux,X,Master,Xavier,M,30/03/1975,X-Club,X900,Xena,F,11/07/1978,X-Club,X901,Xylophages Xeniaux - Xavier (X-Club) - Xena (X-Club)
