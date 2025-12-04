@@ -672,19 +672,31 @@ function App() {
             time: string;
         };
 
+        function normalizeGender(g: string): string {
+            const up = g.toUpperCase();
+            // On considère "M" comme "H" pour le classement
+            if (up === "M") return "H";
+            return up;
+        }
+
         function computePodium(
             category: string,
             genderCode: string
         ): PodiumEntry[] {
+            const targetGender = normalizeGender(genderCode);
+
             const filtered = results
                 .map((r) => {
                     const p = participantsInRace.find(
                         (pt) => pt.bibNumber === r.bibNumber
                     );
                     if (!p) return null;
+
                     if (p.teamCategory !== category) return null;
-                    if ((p.teamGender || "").toUpperCase() !== genderCode.toUpperCase())
-                        return null;
+
+                    const participantGender = normalizeGender(p.teamGender || "");
+                    if (participantGender !== targetGender) return null;
+
                     return { r, p };
                 })
                 .filter((x): x is { r: Result; p: Participant } => x !== null)
