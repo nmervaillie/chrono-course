@@ -1,45 +1,6 @@
 import React, { useEffect, useState } from "react";
-
-type Result = {
-    id: string;
-    bibNumber: string;
-    elapsedSeconds: number;
-};
-
-type StartWave = {
-    id: string;
-    startedAt: string; // ISO
-    categories: string[];
-    genders: string[]; // codes en majuscule: H/F/X
-};
-
-type Race = {
-    id: string;
-    name: string; // = competition
-    startedAt: string | null; // départ général (optionnel)
-    finished: boolean;
-    results: Result[];
-    waves: StartWave[]; // vagues de départ
-};
-
-type Participant = {
-    bibNumber: string;
-    competition: string;
-    teamName: string;
-    teamFullName: string;
-    teamGender: string; // H / F / X (ou autre)
-    teamCategory: string;
-    nameParticipant1: string;
-    genderParticipant1: string;
-    birthDateParticipant1: string;
-    clubParticipant1: string;
-    licenseParticipant1: string;
-    nameParticipant2: string;
-    genderParticipant2: string;
-    birthDateParticipant2: string;
-    clubParticipant2: string;
-    licenseParticipant2: string;
-};
+import type {Race, Result, Participant, StartWave} from "./domain/models";
+import { formatDuration } from "./domain/time";
 
 type StoredState = {
     races: Race[];
@@ -62,14 +23,6 @@ const FIXED_CATEGORIES = [
     "Master",
 ];
 const FIXED_GENDERS = ["F", "H", "X"];
-
-function formatDuration(totalSeconds: number) {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    const pad = (n: number) => n.toString().padStart(2, "0");
-    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-}
 
 function uuid() {
     return Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
