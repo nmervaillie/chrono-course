@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import type {Race, Result, Participant, StartWave} from "./domain/models";
 import { formatDuration } from "./domain/time";
 import { getWaveStartForParticipant } from "./domain/timing";
+import { parseParticipantsCsv, generateResultsCsv } from "./domain/csv";
+import { sortedResults } from "./domain/ranking";
 
 type StoredState = {
     races: Race[];
@@ -79,84 +81,6 @@ function InfoIcon({ text }: { text: string }) {
       i
     </span>
     );
-}
-
-/** Lecture du CSV participants (teams + 2 participants) */
-async function parseParticipantsCsv(file: File): Promise<Participant[]> {
-    const text = await file.text();
-    const lines = text
-        .split(/\r?\n/)
-        .map((l) => l.trim())
-        .filter((l) => l !== "");
-
-    if (lines.length < 2) throw new Error("CSV vide ou sans données.");
-
-    const header = lines[0];
-    const delimiter = header.includes(";") ? ";" : ",";
-    const cols = header.split(delimiter).map((c) => c.trim().toLowerCase());
-    const idx = (n: string) => cols.indexOf(n.toLowerCase());
-
-    const required = [
-        "bib",
-        "competition",
-        "teamname",
-        "teamfullname",
-        "teamgender",
-        "teamcategory",
-        "nameparticipant1",
-        "genderparticipant1",
-        "birthdateparticipant1",
-        "clubparticipant1",
-        "licenseparticipant1",
-        "nameparticipant2",
-        "genderparticipant2",
-        "birthdateparticipant2",
-        "clubparticipant2",
-        "licenseparticipant2",
-    ];
-
-    for (const col of required) {
-        if (idx(col) === -1) {
-            throw new Error(
-                "En-tête CSV invalide. Colonnes requises : " + required.join(", ")
-            );
-        }
-    }
-
-    const participants: Participant[] = [];
-
-    for (let i = 1; i < lines.length; i++) {
-        const row = lines[i];
-        const cells = row.split(delimiter).map((c) => c.trim());
-        if (cells.length < cols.length) continue;
-
-        const get = (c: string) => cells[idx(c)] ?? "";
-
-        const bib = get("bib");
-        const competition = get("competition");
-        if (!bib || !competition) continue;
-
-        participants.push({
-            bibNumber: bib,
-            competition,
-            teamName: get("teamname"),
-            teamFullName: get("teamfullname"),
-            teamGender: get("teamgender"),
-            teamCategory: get("teamcategory"),
-            nameParticipant1: get("nameparticipant1"),
-            genderParticipant1: get("genderparticipant1"),
-            birthDateParticipant1: get("birthdateparticipant1"),
-            clubParticipant1: get("clubparticipant1"),
-            licenseParticipant1: get("licenseparticipant1"),
-            nameParticipant2: get("nameparticipant2"),
-            genderParticipant2: get("genderparticipant2"),
-            birthDateParticipant2: get("birthdateparticipant2"),
-            clubParticipant2: get("clubparticipant2"),
-            licenseParticipant2: get("licenseparticipant2"),
-        });
-    }
-
-    return participants;
 }
 
 function App() {
@@ -393,10 +317,10 @@ function App() {
 
     // ---------------- EDITION / SUPPRESSION ----------------
 
-    function sortedResults(race: Race | null) {
-        if (!race) return [];
-        return race.results.slice().sort((a, b) => a.elapsedSeconds - b.elapsedSeconds);
-    }
+    // function sortedResults(race: Race | null) {
+    //     if (!race) return [];
+    //     return race.results.slice().sort((a, b) => a.elapsedSeconds - b.elapsedSeconds);
+    // }
 
     function editResult(resultId: string) {
         if (!currentRace) return;
@@ -456,68 +380,6 @@ function App() {
         );
     }
 
-    // ---------------- EXPORT CSV ENRICHI ----------------
-
-    function generateCsvContent(race: Race) {
-        const header =
-            "bib,competition,teamName,teamFullName,teamGender,teamCategory," +
-            "nameParticipant1,genderParticipant1,birthDateParticipant1,clubParticipant1,licenseParticipant1," +
-            "nameParticipant2,genderParticipant2,birthDateParticipant2,clubParticipant2,licenseParticipant2," +
-            "elapsed_time\n";
-
-        const lines = sortedResults(race)
-            .map((r) => {
-                const p = participants.find((pt) => pt.bibNumber === r.bibNumber);
-                const safe = (v: string | undefined) =>
-                    (v ?? "").replace(/"/g, '""');
-
-                if (!p) {
-                    return [
-                        r.bibNumber,
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        "",
-                        formatDuration(r.elapsedSeconds),
-                    ].join(",");
-                }
-
-                return [
-                    safe(p.bibNumber),
-                    safe(p.competition),
-                    safe(p.teamName),
-                    safe(p.teamFullName),
-                    safe(p.teamGender),
-                    safe(p.teamCategory),
-                    safe(p.nameParticipant1),
-                    safe(p.genderParticipant1),
-                    safe(p.birthDateParticipant1),
-                    safe(p.clubParticipant1),
-                    safe(p.licenseParticipant1),
-                    safe(p.nameParticipant2),
-                    safe(p.genderParticipant2),
-                    safe(p.birthDateParticipant2),
-                    safe(p.clubParticipant2),
-                    safe(p.licenseParticipant2),
-                    formatDuration(r.elapsedSeconds),
-                ].join(",");
-            })
-            .join("\n");
-
-        return header + lines + "\n";
-    }
-
     function downloadCsv() {
         if (!currentRace) {
             setDownloadMessage("Aucune course sélectionnée.");
@@ -528,7 +390,7 @@ function App() {
             return;
         }
 
-        const csv = generateCsvContent(currentRace);
+        const csv = generateResultsCsv(currentRace, participants);
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
