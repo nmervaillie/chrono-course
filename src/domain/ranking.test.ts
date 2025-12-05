@@ -8,9 +8,9 @@ const race: Race = {
     startedAt: null,
     finished: false,
     results: [
-        { id: "a", bibNumber: "1", elapsedSeconds: 100 }, // 1er
-        { id: "b", bibNumber: "2", elapsedSeconds: 120 }, // 2e
-        { id: "c", bibNumber: "3", elapsedSeconds: 150 }, // 3e
+        { id: "a", bibNumber: "1", elapsedSeconds: 100, arrivalAt: "" }, // 1er
+        { id: "b", bibNumber: "2", elapsedSeconds: 120, arrivalAt: "" }, // 2e
+        { id: "c", bibNumber: "3", elapsedSeconds: 150, arrivalAt: "" }, // 3e
     ],
     waves: [],
 };

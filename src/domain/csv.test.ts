@@ -44,8 +44,8 @@ describe("generateResultsCsv", () => {
         startedAt: null,
         finished: false,
         results: [
-            { id: "a", bibNumber: "1", elapsedSeconds: 90 },
-            { id: "b", bibNumber: "2", elapsedSeconds: 120 },
+            { id: "a", bibNumber: "1", elapsedSeconds: 90, arrivalAt: "" },
+            { id: "b", bibNumber: "2", elapsedSeconds: 120, arrivalAt: "" },
         ],
         waves: [],
     };
