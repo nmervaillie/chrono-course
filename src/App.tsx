@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type {Race, Result, Participant, StartWave} from "./domain/models";
 import { formatDuration } from "./domain/time";
+import { getWaveStartForParticipant } from "./domain/timing";
 
 type StoredState = {
     races: Race[];
@@ -324,30 +325,6 @@ function App() {
         // On garde ou on efface la sélection ? Je choisis de l'effacer
         setWaveCategories([]);
         setWaveGenders([]);
-    }
-
-    function getWaveStartForParticipant(race: Race, p: Participant): string | null {
-        const cat = p.teamCategory;
-        const g = (p.teamGender || "").toUpperCase();
-
-        // On parcourt les vagues dans l'ordre chronologique
-        const wavesSorted = race.waves
-            .slice()
-            .sort(
-                (a, b) =>
-                    new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()
-            );
-
-        for (const wave of wavesSorted) {
-            const matchCat = cat && wave.categories.includes(cat);
-            const matchGen = g && wave.genders.includes(g);
-            if (matchCat || matchGen) {
-                return wave.startedAt;
-            }
-        }
-
-        // sinon, départ général éventuel
-        return race.startedAt;
     }
 
     // ---------------- ARRIVÉES ----------------
