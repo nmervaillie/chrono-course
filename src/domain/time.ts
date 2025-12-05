@@ -10,3 +10,14 @@ export function formatDuration(totalSeconds: number): string {
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
+
+export function formatTimeOfDayFromIso(iso: string | undefined | null): string {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+    });
+}

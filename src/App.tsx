@@ -245,6 +245,7 @@ function App() {
             return;
         }
 
+        const nowIso = new Date().toISOString();
         const elapsed = Math.floor(
             (Date.now() - new Date(startIso).getTime()) / 1000
         );
@@ -253,6 +254,7 @@ function App() {
             id: uuid(),
             bibNumber: bib,
             elapsedSeconds: elapsed,
+            arrivalAt: nowIso,
         };
 
         setRaces((prev) =>

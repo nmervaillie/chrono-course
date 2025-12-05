@@ -2,7 +2,7 @@
 
 // Parsing du CSV d'entrée (participants) et génération du CSV de résultats.
 import type {Participant, Race} from "./models";
-import { formatDuration } from "./time";
+import { formatDuration, formatTimeOfDayFromIso } from "./time";
 
 /** Lecture du CSV participants (teams + 2 participants) */
 export async function parseParticipantsCsv(file: File): Promise<Participant[]> {
@@ -93,7 +93,7 @@ export function generateResultsCsv(race: Race, participants: Participant[]): str
         "bib,competition,teamName,teamFullName,teamGender,teamCategory," +
         "nameParticipant1,genderParticipant1,birthDateParticipant1,clubParticipant1,licenseParticipant1," +
         "nameParticipant2,genderParticipant2,birthDateParticipant2,clubParticipant2,licenseParticipant2," +
-        "elapsed_time\n";
+        "elapsed_time,arrival_time\n";
 
     const safe = (v: string | undefined) => (v ?? "").replace(/"/g, '""');
 
@@ -124,6 +124,7 @@ export function generateResultsCsv(race: Race, participants: Participant[]): str
                     "",
                     "",
                     formatDuration(r.elapsedSeconds),
+                    formatTimeOfDayFromIso(r.arrivalAt),
                 ].join(",");
             }
 
@@ -145,6 +146,7 @@ export function generateResultsCsv(race: Race, participants: Participant[]): str
                 safe(p.clubParticipant2),
                 safe(p.licenseParticipant2),
                 formatDuration(r.elapsedSeconds),
+                formatTimeOfDayFromIso(r.arrivalAt),
             ].join(",");
         })
         .join("\n");
