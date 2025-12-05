@@ -4,6 +4,9 @@ import { formatDuration } from "./domain/time";
 import { getWaveStartForParticipant } from "./domain/timing";
 import { parseParticipantsCsv, generateResultsCsv } from "./domain/csv";
 import { sortedResults } from "./domain/ranking";
+import { Sidebar } from "./components/Sidebar";
+import { ArrivalInput } from "./components/ArrivalInput";
+import { ResultsSection } from "./components/ResultsSection";
 
 type StoredState = {
     races: Race[];
@@ -12,20 +15,6 @@ type StoredState = {
 };
 
 const STORAGE_KEY = "chrono-course-with-participants-v3";
-
-// Catégories / genres fixes
-const FIXED_CATEGORIES = [
-    "Mini-Poussin",
-    "Poussin",
-    "Pupille",
-    "Benjamin",
-    "Minime",
-    "Cadet",
-    "Junior",
-    "Senior",
-    "Master",
-];
-const FIXED_GENDERS = ["F", "H", "X"];
 
 function uuid() {
     return Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
@@ -55,32 +44,6 @@ function loadInitialState(): StoredState {
     } catch {
         return { races: [], participants: [], currentRaceId: null };
     }
-}
-
-/** Petite icône info */
-function InfoIcon({ text }: { text: string }) {
-    return (
-        <span
-            style={{
-                display: "inline-block",
-                marginLeft: 6,
-                cursor: "pointer",
-                fontWeight: "bold",
-                color: "#222",
-                border: "1px solid #555",
-                borderRadius: "50%",
-                width: "16px",
-                height: "16px",
-                lineHeight: "14px",
-                textAlign: "center",
-                fontSize: "12px",
-                backgroundColor: "#f9f9f9",
-            }}
-            title={text}
-        >
-      i
-    </span>
-    );
 }
 
 function App() {
@@ -210,12 +173,6 @@ function App() {
 
     // ---------------- DÉPARTS DÉCALÉS (VAGUES) ----------------
 
-    function toggleInArray(arr: string[], value: string): string[] {
-        return arr.includes(value)
-            ? arr.filter((v) => v !== value)
-            : [...arr, value];
-    }
-
     function createWave() {
         if (!currentRace) return;
         if (currentRace.finished) {
@@ -308,19 +265,7 @@ function App() {
         setDownloadMessage(null);
     }
 
-    function handleBibKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            addArrival();
-        }
-    }
-
     // ---------------- EDITION / SUPPRESSION ----------------
-
-    // function sortedResults(race: Race | null) {
-    //     if (!race) return [];
-    //     return race.results.slice().sort((a, b) => a.elapsedSeconds - b.elapsedSeconds);
-    // }
 
     function editResult(resultId: string) {
         if (!currentRace) return;
@@ -668,25 +613,6 @@ function App() {
 
     // ---------------- AFFICHAGE ----------------
 
-    function raceChrono() {
-        if (!currentRace?.startedAt) return "00:00:00";
-        const diff = Math.floor(
-            (nowTs - new Date(currentRace.startedAt).getTime()) / 1000
-        );
-        return formatDuration(Math.max(0, diff));
-    }
-
-    function formatStartTime(iso: string | null) {
-        if (!iso) return "-";
-        const d = new Date(iso);
-        return d.toLocaleTimeString("fr-FR", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: false,
-        });
-    }
-
     return (
         <div
             style={{
@@ -709,538 +635,53 @@ function App() {
                     alignItems: "flex-start",
                 }}
             >
-                {/* SIDEBAR */}
-                <aside
-                    style={{
-                        border: "1px solid #ccc",
-                        borderRadius: 6,
-                        padding: 10,
-                        backgroundColor: "#fff",
-                    }}
-                >
-                    <h2 style={{ fontSize: 16, marginTop: 0 }}>Participants</h2>
-                    <input type="file" accept=".csv" onChange={handleParticipantsFileChange} />
-                    {importMessage && (
-                        <p style={{ fontSize: 12, marginTop: 6 }}>{importMessage}</p>
-                    )}
-                    <p style={{ fontSize: 11, marginTop: 2 }}>
-                        Format attendu
-                        <InfoIcon
-                            text={
-                                "bib,competition,teamName,teamFullName,teamGender,teamCategory," +
-                                "nameParticipant1,genderParticipant1,birthDateParticipant1,clubParticipant1,licenseParticipant1," +
-                                "nameParticipant2,genderParticipant2,birthDateParticipant2,clubParticipant2,licenseParticipant2"
-                            }
-                        />
-                    </p>
+                <Sidebar
+                    races={races}
+                    currentRaceId={currentRaceId}
+                    onSelectRace={setCurrentRaceId}
+                    onResetAll={resetAll}
+                    importMessage={importMessage}
+                    onFileChange={handleParticipantsFileChange}
+                />
 
-                    <hr style={{ margin: "10px 0" }} />
-
-                    <h2 style={{ fontSize: 16, marginTop: 0 }}>Courses</h2>
-                    {races.length === 0 ? (
-                        <p style={{ fontSize: 13 }}>Aucune course (importer un CSV).</p>
-                    ) : (
-                        <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: 13 }}>
-                            {races.map((race) => {
-                                const isActive = race.id === currentRaceId;
-                                return (
-                                    <li
-                                        key={race.id}
-                                        onClick={() => setCurrentRaceId(race.id)}
-                                        style={{
-                                            border: "1px solid #ddd",
-                                            borderRadius: 4,
-                                            padding: 6,
-                                            marginBottom: 6,
-                                            backgroundColor: isActive ? "#e0ecff" : "#fafafa",
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        <strong>{race.name}</strong>
-                                        <div style={{ fontSize: 11, marginTop: 2 }}>
-                                            Statut :{" "}
-                                            {race.startedAt
-                                                ? race.finished
-                                                    ? "terminée"
-                                                    : "en cours"
-                                                : "non démarrée"}
-                                            <br />
-                                            Arrivées : {race.results.length}
-                                        </div>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    )}
-
-                    <button
-                        onClick={resetAll}
-                        style={{
-                            marginTop: 10,
-                            width: "100%",
-                            padding: "6px 8px",
-                            borderRadius: 4,
-                            border: "none",
-                            backgroundColor: "#333",
-                            color: "#fff",
-                            fontSize: 13,
-                            cursor: "pointer",
-                        }}
-                    >
-                        Réinitialiser tout
-                    </button>
-                </aside>
-
-                {/* MAIN */}
                 <main>
-                    {/* Arrivées */}
-                    <section
-                        style={{
-                            border: "1px solid #ccc",
-                            borderRadius: 6,
-                            padding: 10,
-                            backgroundColor: "#fff",
-                            marginBottom: 10,
-                        }}
-                    >
-                        <h2 style={{ fontSize: 16, marginTop: 0 }}>Arrivées (ligne commune)</h2>
-                        <div style={{ display: "flex", gap: 8 }}>
-                            <input
-                                type="text"
-                                placeholder="bib"
-                                value={bibInput}
-                                onChange={(e) => setBibInput(e.target.value)}
-                                onKeyDown={handleBibKeyDown}
-                                style={{
-                                    flex: "0 0 120px",
-                                    padding: "4px 6px",
-                                    borderRadius: 4,
-                                    border: "1px solid #bbb",
-                                    backgroundColor: "#fdfdfd",
-                                    color: "#000",
-                                    fontSize: 14,
-                                }}
-                            />
-                            <button
-                                onClick={addArrival}
-                                disabled={participants.length === 0}
-                                style={{
-                                    padding: "4px 10px",
-                                    borderRadius: 4,
-                                    border: "none",
-                                    backgroundColor: "#0050b3",
-                                    color: "#fff",
-                                    fontSize: 13,
-                                    cursor: "pointer",
-                                }}
-                            >
-                                Enregistrer l&apos;arrivée
-                            </button>
-                        </div>
-                        <p style={{ fontSize: 11, marginTop: 4 }}>
-                            Le temps est calculé par rapport à la vague dont la catégorie ou le genre
-                            correspond, sinon au départ général.
-                        </p>
-                    </section>
+                    <ArrivalInput
+                        bib={bibInput}
+                        onChangeBib={setBibInput}
+                        onSubmit={addArrival}
+                        disabled={participants.length === 0}
+                    />
 
-                    {/* Course actuelle */}
                     {currentRace ? (
-                        <>
-                            <section
-                                style={{
-                                    border: "1px solid #ccc",
-                                    borderRadius: 6,
-                                    padding: 10,
-                                    backgroundColor: "#fff",
-                                    marginBottom: 10,
-                                }}
-                            >
-                                <h2 style={{ fontSize: 16, marginTop: 0 }}>
-                                    Course : {currentRace.name}
-                                </h2>
-                                <p style={{ fontSize: 13, margin: "2px 0" }}>
-                                    Statut :{" "}
-                                    {currentRace.startedAt
-                                        ? currentRace.finished
-                                            ? "Course terminée"
-                                            : "Course en cours"
-                                        : "Course non démarrée"}
-                                </p>
-                                <p style={{ fontSize: 13, margin: "2px 0" }}>
-                                    Départ général : {formatStartTime(currentRace.startedAt)}
-                                </p>
-                                <p style={{ fontSize: 13, margin: "2px 0 6px" }}>
-                                    Chrono (depuis départ général) :{" "}
-                                    <strong>{raceChrono()}</strong>
-                                </p>
-
-                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                    <button
-                                        onClick={() => startRace(currentRace.id)}
-                                        disabled={!!currentRace.startedAt && !currentRace.finished}
-                                        style={{
-                                            padding: "4px 10px",
-                                            borderRadius: 4,
-                                            border: "none",
-                                            backgroundColor: "#0070c9",
-                                            color: "#fff",
-                                            fontSize: 13,
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        Démarrer / Redémarrer (général)
-                                    </button>
-                                    <button
-                                        onClick={() => stopRace(currentRace.id)}
-                                        disabled={!currentRace.startedAt || currentRace.finished}
-                                        style={{
-                                            padding: "4px 10px",
-                                            borderRadius: 4,
-                                            border: "none",
-                                            backgroundColor: "#d9480f",
-                                            color: "#fff",
-                                            fontSize: 13,
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        Arrêter la course
-                                    </button>
-                                </div>
-
-                                {/* Départs décalés */}
-                                <div
-                                    style={{
-                                        marginTop: 10,
-                                        paddingTop: 8,
-                                        borderTop: "1px dashed #ccc",
-                                        fontSize: 13,
-                                    }}
-                                >
-                                    <strong>Vagues de départ (catégories & genres)</strong>
-
-                                    <div
-                                        style={{
-                                            marginTop: 6,
-                                            display: "flex",
-                                            flexWrap: "wrap",
-                                            gap: 16,
-                                        }}
-                                    >
-                                        {/* Catégories */}
-                                        <div>
-                                            <div style={{ fontSize: 12, marginBottom: 4 }}>
-                                                Catégories :
-                                            </div>
-                                            {FIXED_CATEGORIES.map((cat) => (
-                                                <label
-                                                    key={cat}
-                                                    style={{ display: "block", fontSize: 12 }}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={waveCategories.includes(cat)}
-                                                        onChange={() =>
-                                                            setWaveCategories((prev) =>
-                                                                toggleInArray(prev, cat)
-                                                            )
-                                                        }
-                                                        style={{ marginRight: 4 }}
-                                                    />
-                                                    {cat}
-                                                </label>
-                                            ))}
-                                        </div>
-
-                                        {/* Genres */}
-                                        <div>
-                                            <div style={{ fontSize: 12, marginBottom: 4 }}>
-                                                Genres :
-                                            </div>
-                                            {FIXED_GENDERS.map((g) => (
-                                                <label
-                                                    key={g}
-                                                    style={{ display: "block", fontSize: 12 }}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={waveGenders.includes(g)}
-                                                        onChange={() =>
-                                                            setWaveGenders((prev) => toggleInArray(prev, g))
-                                                        }
-                                                        style={{ marginRight: 4 }}
-                                                    />
-                                                    {g}
-                                                </label>
-                                            ))}
-                                        </div>
-
-                                        {/* Bouton vague */}
-                                        <div style={{ alignSelf: "flex-end" }}>
-                                            <button
-                                                onClick={createWave}
-                                                style={{
-                                                    padding: "4px 8px",
-                                                    borderRadius: 4,
-                                                    border: "none",
-                                                    backgroundColor: "#444",
-                                                    color: "#fff",
-                                                    fontSize: 12,
-                                                    cursor: "pointer",
-                                                    marginTop: 8,
-                                                }}
-                                            >
-                                                Lancer le départ pour cette sélection
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Liste des vagues */}
-                                    {currentRace.waves.length > 0 && (
-                                        <div style={{ marginTop: 8 }}>
-                                            <div style={{ fontSize: 12, marginBottom: 4 }}>
-                                                Vagues enregistrées :
-                                            </div>
-                                            <ul
-                                                style={{
-                                                    margin: 0,
-                                                    paddingLeft: 16,
-                                                    fontSize: 12,
-                                                    maxHeight: 120,
-                                                    overflowY: "auto",
-                                                }}
-                                            >
-                                                {currentRace.waves
-                                                    .slice()
-                                                    .sort(
-                                                        (a, b) =>
-                                                            new Date(a.startedAt).getTime() -
-                                                            new Date(b.startedAt).getTime()
-                                                    )
-                                                    .map((w, idx) => (
-                                                        <li key={w.id}>
-                                                            Vague {idx + 1} –{" "}
-                                                            {formatStartTime(w.startedAt)} –{" "}
-                                                            {w.categories.length > 0 && (
-                                                                <>
-                                                                    Cat: {w.categories.join(", ")}{" "}
-                                                                </>
-                                                            )}
-                                                            {w.genders.length > 0 && (
-                                                                <>
-                                                                    Genres: {w.genders.join(", ")}
-                                                                </>
-                                                            )}
-                                                        </li>
-                                                    ))}
-                                            </ul>
-                                        </div>
-                                    )}
-                                </div>
-                            </section>
-
-                            {/* Résultats */}
-                            <section
-                                style={{
-                                    border: "1px solid #ccc",
-                                    borderRadius: 6,
-                                    padding: 10,
-                                    backgroundColor: "#fff",
-                                }}
-                            >
-                                <h2 style={{ fontSize: 16, marginTop: 0 }}>
-                                    Résultats de la course
-                                </h2>
-                                {currentRace.results.length === 0 ? (
-                                    <p style={{ fontSize: 13 }}>Aucun résultat pour cette course.</p>
-                                ) : (
-                                    <div style={{ overflowX: "auto" }}>
-                                        <table
-                                            style={{
-                                                width: "100%",
-                                                borderCollapse: "collapse",
-                                                fontSize: 13,
-                                            }}
-                                        >
-                                            <thead>
-                                            <tr>
-                                                <th
-                                                    style={{
-                                                        borderBottom: "1px solid #bbb",
-                                                        textAlign: "left",
-                                                        padding: "2px 4px",
-                                                    }}
-                                                >
-                                                    bib
-                                                </th>
-                                                <th
-                                                    style={{
-                                                        borderBottom: "1px solid #bbb",
-                                                        textAlign: "left",
-                                                        padding: "2px 4px",
-                                                    }}
-                                                >
-                                                    Nom (équipe)
-                                                </th>
-                                                <th
-                                                    style={{
-                                                        borderBottom: "1px solid #bbb",
-                                                        textAlign: "left",
-                                                        padding: "2px 4px",
-                                                    }}
-                                                >
-                                                    Catégorie
-                                                </th>
-                                                <th
-                                                    style={{
-                                                        borderBottom: "1px solid #bbb",
-                                                        textAlign: "left",
-                                                        padding: "2px 4px",
-                                                    }}
-                                                >
-                                                    Temps
-                                                </th>
-                                                <th
-                                                    style={{
-                                                        borderBottom: "1px solid #bbb",
-                                                        textAlign: "left",
-                                                        padding: "2px 4px",
-                                                    }}
-                                                >
-                                                    Actions
-                                                </th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            {sortedResults(currentRace).map((r) => {
-                                                const p = participants.find(
-                                                    (pt) => pt.bibNumber === r.bibNumber
-                                                );
-                                                return (
-                                                    <tr key={r.id}>
-                                                        <td
-                                                            style={{
-                                                                borderBottom: "1px solid #eee",
-                                                                padding: "2px 4px",
-                                                            }}
-                                                        >
-                                                            {r.bibNumber}
-                                                        </td>
-                                                        <td
-                                                            style={{
-                                                                borderBottom: "1px solid #eee",
-                                                                padding: "2px 4px",
-                                                            }}
-                                                        >
-                                                            {p?.teamFullName ?? "-"}
-                                                        </td>
-                                                        <td
-                                                            style={{
-                                                                borderBottom: "1px solid #eee",
-                                                                padding: "2px 4px",
-                                                            }}
-                                                        >
-                                                            {p?.teamCategory ?? "-"}
-                                                        </td>
-                                                        <td
-                                                            style={{
-                                                                borderBottom: "1px solid #eee",
-                                                                padding: "2px 4px",
-                                                            }}
-                                                        >
-                                                            {formatDuration(r.elapsedSeconds)}
-                                                        </td>
-                                                        <td
-                                                            style={{
-                                                                borderBottom: "1px solid #eee",
-                                                                padding: "2px 4px",
-                                                            }}
-                                                        >
-                                                            <button
-                                                                onClick={() => editResult(r.id)}
-                                                                style={{
-                                                                    fontSize: 11,
-                                                                    padding: "2px 4px",
-                                                                    marginRight: 4,
-                                                                    borderRadius: 4,
-                                                                    border: "none",
-                                                                    backgroundColor: "#555",
-                                                                    color: "#fff",
-                                                                    cursor: "pointer",
-                                                                }}
-                                                            >
-                                                                Modifier
-                                                            </button>
-                                                            <button
-                                                                onClick={() => deleteResult(r.id)}
-                                                                style={{
-                                                                    fontSize: 11,
-                                                                    padding: "2px 4px",
-                                                                    borderRadius: 4,
-                                                                    border: "none",
-                                                                    backgroundColor: "#b00020",
-                                                                    color: "#fff",
-                                                                    cursor: "pointer",
-                                                                }}
-                                                            >
-                                                                Supprimer
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-
-                                <div
-                                    style={{
-                                        marginTop: 8,
-                                        display: "flex",
-                                        flexWrap: "wrap",
-                                        gap: 8,
-                                    }}
-                                >
-                                    <button
-                                        onClick={downloadCsv}
-                                        disabled={!currentRace || currentRace.results.length === 0}
-                                        style={{
-                                            padding: "4px 10px",
-                                            borderRadius: 4,
-                                            border: "none",
-                                            backgroundColor: "#0050b3",
-                                            color: "#fff",
-                                            fontSize: 13,
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        Télécharger le CSV complet
-                                    </button>
-
-                                    <button
-                                        onClick={openRankingPopup}
-                                        disabled={!currentRace || currentRace.results.length === 0}
-                                        style={{
-                                            padding: "4px 10px",
-                                            borderRadius: 4,
-                                            border: "none",
-                                            backgroundColor: "#2b8a3e",
-                                            color: "#fff",
-                                            fontSize: 13,
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        Afficher le classement
-                                    </button>
-
-                                    {downloadMessage && (
-                                        <p style={{ fontSize: 11, margin: "4px 0 0" }}>
-                                            {downloadMessage}
-                                        </p>
-                                    )}
-                                </div>
-                            </section>
-                        </>
+                        <ResultsSection
+                            race={currentRace}
+                            participants={participants}
+                            nowTs={nowTs}
+                            waveCategories={waveCategories}
+                            waveGenders={waveGenders}
+                            onToggleWaveCategory={(cat) =>
+                                setWaveCategories((prev) =>
+                                    prev.includes(cat)
+                                        ? prev.filter((c) => c !== cat)
+                                        : [...prev, cat]
+                                )
+                            }
+                            onToggleWaveGender={(g) =>
+                                setWaveGenders((prev) =>
+                                    prev.includes(g)
+                                        ? prev.filter((x) => x !== g)
+                                        : [...prev, g]
+                                )
+                            }
+                            onCreateWave={createWave}
+                            onStartRace={() => startRace(currentRace.id)}
+                            onStopRace={() => stopRace(currentRace.id)}
+                            onEditResult={editResult}
+                            onDeleteResult={deleteResult}
+                            onDownloadCsv={downloadCsv}
+                            onOpenRanking={openRankingPopup}
+                            downloadMessage={downloadMessage}
+                        />
                     ) : (
                         <p style={{ fontSize: 13 }}>
                             Aucune course sélectionnée. Importer un fichier CSV pour commencer.
