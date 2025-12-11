@@ -1,8 +1,7 @@
 // Parsing du CSV d'entrée (participants) et génération du CSV de résultats.
-
-// Parsing du CSV d'entrée (participants) et génération du CSV de résultats.
 import type {Participant, Race} from "./models";
 import { formatDuration, formatTimeOfDayFromIso } from "./time";
+import {normalizeGenderToCode} from "./ranking.ts";
 
 /** Lecture du CSV participants (teams + 2 participants) */
 export async function parseParticipantsCsv(file: File): Promise<Participant[]> {
@@ -66,15 +65,15 @@ export async function parseParticipantsCsv(file: File): Promise<Participant[]> {
             competition,
             teamName: get("teamname"),
             teamFullName: get("teamfullname"),
-            teamGender: get("teamgender"),
+            teamGender: normalizeGenderToCode(get("teamgender")),
             teamCategory: get("teamcategory"),
             nameParticipant1: get("nameparticipant1"),
-            genderParticipant1: get("genderparticipant1"),
+            genderParticipant1: normalizeGenderToCode(get("genderparticipant1")),
             birthDateParticipant1: get("birthdateparticipant1"),
             clubParticipant1: get("clubparticipant1"),
             licenseParticipant1: get("licenseparticipant1"),
             nameParticipant2: get("nameparticipant2"),
-            genderParticipant2: get("genderparticipant2"),
+            genderParticipant2: normalizeGenderToCode(get("genderparticipant2")),
             birthDateParticipant2: get("birthdateparticipant2"),
             clubParticipant2: get("clubparticipant2"),
             licenseParticipant2: get("licenseparticipant2"),

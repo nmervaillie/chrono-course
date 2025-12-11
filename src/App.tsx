@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import type {Race, Result, Participant, StartWave} from "./domain/models";
+import type {Race, Result, Participant, StartWave, GenderCode} from "./domain/models";
 import { formatDuration, formatTimeOfDayFromIso, parseTimeOfDayToDate } from "./domain/time";
 import { getWaveStartForParticipant } from "./domain/timing";
 import { parseParticipantsCsv, generateResultsCsv } from "./domain/csv";
@@ -73,7 +73,7 @@ function App() {
 
     // sélection pour une nouvelle vague de départ
     const [waveCategories, setWaveCategories] = useState<string[]>([]);
-    const [waveGenders, setWaveGenders] = useState<string[]>([]);
+    const [waveGenders, setWaveGenders] = useState<GenderCode[]>([]);
 
     // Sauvegarde
     useEffect(() => {
@@ -195,7 +195,7 @@ function App() {
             id: uuid(),
             startedAt: nowIso,
             categories: [...waveCategories],
-            genders: waveGenders.map((g) => g.toUpperCase()),
+            genders: [...waveGenders],
         };
 
         setRaces((prev) =>

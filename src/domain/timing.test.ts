@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { getWaveStartForParticipant, computeElapsedSeconds } from "./timing";
 import type {Race, Participant} from "./models";
+import {normalizeGenderToCode} from "./ranking.ts";
 
 const baseRace: Race = {
     id: "r1",
@@ -30,15 +31,15 @@ const makeParticipant = (cat: string, gender: string): Participant =>
         competition: "6-9",
         teamName: "Team",
         teamFullName: "Team Full",
-        teamGender: gender,
+        teamGender: normalizeGenderToCode(gender),
         teamCategory: cat,
         nameParticipant1: "",
-        genderParticipant1: "",
+        genderParticipant1: normalizeGenderToCode(gender),
         birthDateParticipant1: "",
         clubParticipant1: "",
         licenseParticipant1: "",
         nameParticipant2: "",
-        genderParticipant2: "",
+        genderParticipant2: normalizeGenderToCode(gender),
         birthDateParticipant2: "",
         clubParticipant2: "",
         licenseParticipant2: "",

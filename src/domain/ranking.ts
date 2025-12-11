@@ -1,7 +1,7 @@
 // Logique de classement : tri, podiums, etc.
 
 // Logique de classement : tri, podiums, etc.
-import type {Race, Result, Participant} from "./models";
+import type {Race, Result, Participant, GenderCode} from "./models";
 import { formatDuration } from "./time";
 
 export function sortedResults(race: Race): Result[] {
@@ -15,10 +15,14 @@ export type PodiumEntry = {
     time: string;
 };
 
-function normalizeGender(g: string): string {
+export function normalizeGenderToCode(g: string): GenderCode {
     const up = g.toUpperCase();
-    if (up === "M") return "H"; // M est traité comme H
-    return up;
+
+    if (up === "M" || up === "H") return "M";
+    if (up === "F") return "F";
+    if (up === "X") return "X";
+
+    throw new Error("Genre incorrect: " + g + " - doit etre M/F/X");
 }
 
 /**
@@ -41,7 +45,7 @@ export function computePodium(
         (p) => p.competition === race.name
     );
 
-    const targetGender = normalizeGender(genderCode);
+    const targetGender = normalizeGenderToCode(genderCode);
 
     const filtered = results
         .map((r) => {
@@ -49,7 +53,7 @@ export function computePodium(
             if (!p) return null;
             if (p.teamCategory !== category) return null;
 
-            const participantGender = normalizeGender(p.teamGender || "");
+            const participantGender = normalizeGenderToCode(p.teamGender || "");
             if (participantGender !== targetGender) return null;
 
             return { r, p };

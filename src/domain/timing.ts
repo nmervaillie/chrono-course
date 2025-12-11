@@ -1,4 +1,5 @@
 import type {Race, Participant} from "./models";
+import {normalizeGenderToCode} from "./ranking.ts";
 
 /**
  * Retourne l'heure de départ (ISO) à utiliser pour un participant donné
@@ -12,7 +13,7 @@ export function getWaveStartForParticipant(
     p: Participant
 ): string | null {
     const cat = p.teamCategory;
-    const g = (p.teamGender || "").toUpperCase();
+    const g = normalizeGenderToCode(p.teamGender);
 
     // Vagues triées chronologiquement
     const wavesSorted = race.waves

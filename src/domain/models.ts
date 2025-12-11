@@ -1,4 +1,6 @@
 
+export type GenderCode = "M" | "F" | "X";
+
 export type Result = {
   id: string;
   bibNumber: string;
@@ -10,7 +12,7 @@ export type StartWave = {
   id: string;
   startedAt: string; // ISO
   categories: string[];
-  genders: string[]; // codes en majuscule: H/F/X
+  genders: GenderCode[];
 };
 
 export type Race = {
@@ -27,17 +29,17 @@ export type Participant = {
   competition: string;
   teamName: string;
   teamFullName: string;
-  teamGender: string;   // H / F / X (ou autre)
+  teamGender: GenderCode;
   teamCategory: string; // Mini-Poussin, Poussin, ...
 
   nameParticipant1: string;
-  genderParticipant1: string;
+  genderParticipant1: GenderCode;
   birthDateParticipant1: string;
   clubParticipant1: string;
   licenseParticipant1: string;
 
   nameParticipant2: string;
-  genderParticipant2: string;
+  genderParticipant2: GenderCode;
   birthDateParticipant2: string;
   clubParticipant2: string;
   licenseParticipant2: string;

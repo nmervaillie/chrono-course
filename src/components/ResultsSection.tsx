@@ -1,6 +1,6 @@
 // src/components/ResultsSection.tsx
 import React from "react";
-import type {Race, Participant} from "../domain/models";
+import type {Race, Participant, GenderCode} from "../domain/models";
 import { formatDuration } from "../domain/time";
 import { sortedResults } from "../domain/ranking";
 
@@ -16,7 +16,7 @@ const FIXED_CATEGORIES = [
     "Master",
 ];
 
-const FIXED_GENDERS = ["F", "H", "X"];
+const FIXED_GENDERS: GenderCode[] = ["F", "M", "X"];
 
 type ResultsSectionProps = {
     race: Race;
@@ -25,7 +25,7 @@ type ResultsSectionProps = {
     waveCategories: string[];
     waveGenders: string[];
     onToggleWaveCategory: (cat: string) => void;
-    onToggleWaveGender: (g: string) => void;
+    onToggleWaveGender: (g: GenderCode) => void;
     onCreateWave: () => void;
     onStartRace: () => void;
     onStopRace: () => void;
@@ -361,7 +361,7 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
                                                 padding: "2px 4px",
                                             }}
                                         >
-                                            {p?.teamCategory ?? "-"}
+                                            {p?.teamCategory ?? "-"} {p?.teamGender}
                                         </td>
                                         <td
                                             style={{
