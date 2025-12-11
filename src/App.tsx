@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import type {Race, Result, Participant, StartWave} from "./domain/models";
-import { formatDuration } from "./domain/time";
+import { formatDuration, formatTimeOfDayFromIso, parseTimeOfDayToDate } from "./domain/time";
 import { getWaveStartForParticipant } from "./domain/timing";
 import { parseParticipantsCsv, generateResultsCsv } from "./domain/csv";
 import { sortedResults } from "./domain/ranking";
@@ -32,8 +32,14 @@ function loadInitialState(): StoredState {
             name: r.name,
             startedAt: r.startedAt ?? null,
             finished: r.finished ?? false,
-            results: r.results ?? [],
-            waves: r.waves ?? [], // si ancien format sans waves, on part de []
+            results: (r.results ?? []).map((res: any) => ({
+                id: res.id,
+                bibNumber: res.bibNumber,
+                elapsedSeconds: res.elapsedSeconds,
+                // on garde l'arrivée si elle existe, sinon on laisse undefined
+                arrivalAt: res.arrivalAt ?? res.arrival_time ?? undefined,
+            })),
+            waves: r.waves ?? [],
         }));
 
         return {
@@ -275,14 +281,15 @@ function App() {
         const res = race.results.find((r) => r.id === resultId);
         if (!res) return;
 
-        const newBib = window.prompt("Nouveau bib :", res.bibNumber);
-        if (newBib === null) return;
-        const bib = newBib.trim();
-        if (!bib) return;
+        // 1) Édition du bib
+        const newBibInput = window.prompt("Nouveau bib :", res.bibNumber);
+        if (newBibInput === null) return; // annulation
+        const newBib = newBibInput.trim();
+        if (!newBib) return;
 
-        const part = participants.find((p) => p.bibNumber === bib);
+        const part = participants.find((p) => p.bibNumber === newBib);
         if (!part) {
-            alert(`Dossard ${bib} inconnu.`);
+            alert(`Dossard ${newBib} inconnu.`);
             return;
         }
         if (part.competition !== race.name) {
@@ -293,20 +300,62 @@ function App() {
         }
 
         const duplicate = race.results.some(
-            (r) => r.bibNumber === bib && r.id !== resultId
+            (r) => r.bibNumber === newBib && r.id !== resultId
         );
         if (duplicate) {
-            alert(`Le dossard ${bib} a déjà une arrivée dans cette course.`);
+            alert(`Le dossard ${newBib} a déjà une arrivée dans cette course.`);
             return;
         }
 
+        // 2) Édition de l'heure d'arrivée (arrival_time)
+        const currentArrivalStr = formatTimeOfDayFromIso(res.arrivalAt);
+        const timePrompt = `Nouvelle heure d'arrivée pour le bib ${newBib} (format hh:mm:ss) :`;
+        const newArrivalInput = window.prompt(timePrompt, currentArrivalStr || "00:00:00");
+        if (newArrivalInput === null) return; // annulation
+
+        const startIso = getWaveStartForParticipant(race, part);
+        if (!startIso) {
+            alert(
+                `Impossible de calculer le temps : aucun départ défini pour cette course / ce groupe.`
+            );
+            return;
+        }
+
+        // Si on a déjà une arrivalAt, on réutilise la date; sinon on prend aujourd'hui.
+        const baseIso = res.arrivalAt || new Date().toISOString();
+        const newArrivalIso = parseTimeOfDayToDate(baseIso, newArrivalInput);
+        if (!newArrivalIso) {
+            alert(
+                `Heure d'arrivée invalide. Utiliser le format hh:mm:ss, par ex. 14:32:07.`
+            );
+            return;
+        }
+
+        const elapsed = Math.floor(
+            (new Date(newArrivalIso).getTime() - new Date(startIso).getTime()) / 1000
+        );
+        if (elapsed < 0) {
+            alert(
+                `L'heure d'arrivée est avant l'heure de départ (${elapsed}s). Vérifie le temps saisi.`
+            );
+            return;
+        }
+
+        // 3) Mise à jour du résultat dans l'état
         setRaces((prev) =>
             prev.map((r) =>
                 r.id === race.id
                     ? {
                         ...r,
                         results: r.results.map((rr) =>
-                            rr.id === resultId ? { ...rr, bibNumber: bib } : rr
+                            rr.id === resultId
+                                ? {
+                                    ...rr,
+                                    bibNumber: newBib,
+                                    arrivalAt: newArrivalIso,
+                                    elapsedSeconds: elapsed,
+                                }
+                                : rr
                         ),
                     }
                     : r

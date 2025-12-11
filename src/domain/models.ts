@@ -3,7 +3,7 @@ export type Result = {
   id: string;
   bibNumber: string;
   elapsedSeconds: number;
-  arrivalAt: string; // ISO datetime de l'arrivée
+  arrivalAt?: string; // ISO datetime de l'arrivée
 };
 
 export type StartWave = {

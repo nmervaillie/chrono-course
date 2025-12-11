@@ -12,14 +12,14 @@ const baseRace: Race = {
         {
             id: "w1",
             startedAt: "2025-12-04T10:05:00Z",
-            categories: ["Minime", "Cadet", "Junior"],
+            categories: ["Minime", "Benjamin"],
             genders: [],
         },
         {
             id: "w2",
             startedAt: "2025-12-04T10:10:00Z",
-            categories: [],
-            genders: ["F"],
+            categories: ["Pupille"],
+            genders: [],
         },
     ],
 };
@@ -51,8 +51,8 @@ describe("getWaveStartForParticipant", () => {
         expect(start).toBe("2025-12-04T10:05:00Z");
     });
 
-    it("utilise la vague correspondant au genre si pas de catégorie correspondante", () => {
-        const p = makeParticipant("Senior", "F");
+    it("utilise la vague correspondant à la catégorie", () => {
+        const p = makeParticipant("Pupille", "H");
         const start = getWaveStartForParticipant(baseRace, p);
         expect(start).toBe("2025-12-04T10:10:00Z");
     });
