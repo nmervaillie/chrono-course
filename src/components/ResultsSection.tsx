@@ -167,18 +167,34 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
                         {/* Catégories */}
                         <div>
                             <div style={{ fontSize: 12, marginBottom: 4 }}>Catégories :</div>
-                            {FIXED_CATEGORIES.map((cat) => (
-                                <label key={cat} style={{ display: "block", fontSize: 12 }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={waveCategories.includes(cat)}
-                                        onChange={() => onToggleWaveCategory(cat)}
-                                        style={{ marginRight: 4 }}
-                                    />
-                                    {cat}
-                                </label>
-                            ))}
-                            {/* Indication des catégories réellement présentes */}
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 8,
+                                    alignItems: "center",
+                                }}
+                            >
+                                {FIXED_CATEGORIES.map((cat) => (
+                                    <label
+                                        key={cat}
+                                        style={{
+                                            fontSize: 12,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 4,
+                                            whiteSpace: "nowrap",
+                                        }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={waveCategories.includes(cat)}
+                                            onChange={() => onToggleWaveCategory(cat)}
+                                        />
+                                        {cat}
+                                    </label>
+                                ))}
+                            </div>
                             {categoriesForRace.length > 0 && (
                                 <p style={{ fontSize: 11, marginTop: 4 }}>
                                     Catégories présentes dans cette course :{" "}
@@ -190,17 +206,34 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
                         {/* Genres */}
                         <div>
                             <div style={{ fontSize: 12, marginBottom: 4 }}>Genres :</div>
-                            {FIXED_GENDERS.map((g) => (
-                                <label key={g} style={{ display: "block", fontSize: 12 }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={waveGenders.includes(g)}
-                                        onChange={() => onToggleWaveGender(g)}
-                                        style={{ marginRight: 4 }}
-                                    />
-                                    {g}
-                                </label>
-                            ))}
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 8,
+                                    alignItems: "center",
+                                }}
+                            >
+                                {FIXED_GENDERS.map((g) => (
+                                    <label
+                                        key={g}
+                                        style={{
+                                            fontSize: 12,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 4,
+                                            whiteSpace: "nowrap",
+                                        }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={waveGenders.includes(g)}
+                                            onChange={() => onToggleWaveGender(g)}
+                                        />
+                                        {g}
+                                    </label>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Bouton vague */}
@@ -238,22 +271,25 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
                                     overflowY: "auto",
                                 }}
                             >
+                                {/* Toujours afficher la vague 1 = départ général */}
+                                {race.startedAt && (
+                                    <li key="general">
+                                        Vague 1 – {formatStartTime(race.startedAt)} - Départ général
+                                    </li>
+                                )}
+
+                                {/* Puis les vagues de départ utilisateur */}
                                 {race.waves
                                     .slice()
                                     .sort(
                                         (a, b) =>
-                                            new Date(a.startedAt).getTime() -
-                                            new Date(b.startedAt).getTime()
+                                            new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()
                                     )
                                     .map((w, idx) => (
                                         <li key={w.id}>
-                                            Vague {idx + 1} – {formatStartTime(w.startedAt)} –{" "}
-                                            {w.categories.length > 0 && (
-                                                <>Cat: {w.categories.join(", ")} </>
-                                            )}
-                                            {w.genders.length > 0 && (
-                                                <>Genres: {w.genders.join(", ")}</>
-                                            )}
+                                            Vague {idx + 2} – {formatStartTime(w.startedAt)} –{" "}
+                                            {w.categories.length > 0 && <>Cat: {w.categories.join(", ")} </>}
+                                            {w.genders.length > 0 && <>Genres: {w.genders.join(", ")}</>}
                                         </li>
                                     ))}
                             </ul>
