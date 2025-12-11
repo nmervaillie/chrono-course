@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import type {Race, Result, Participant, StartWave, GenderCode} from "./domain/models";
 import { formatDuration, formatTimeOfDayFromIso, parseTimeOfDayToDate } from "./domain/time";
-import { getWaveStartForParticipant } from "./domain/timing";
+import {computeElapsedSeconds, getWaveStartForParticipant} from "./domain/timing";
 import { parseParticipantsCsv, generateResultsCsv } from "./domain/csv";
 import { sortedResults } from "./domain/ranking";
 import { Sidebar } from "./components/Sidebar";
@@ -252,9 +252,7 @@ function App() {
         }
 
         const nowIso = new Date().toISOString();
-        const elapsed = Math.floor(
-            (Date.now() - new Date(startIso).getTime()) / 1000
-        );
+        const elapsed = computeElapsedSeconds(startIso, nowIso);
 
         const newRes: Result = {
             id: uuid(),
@@ -331,9 +329,7 @@ function App() {
             return;
         }
 
-        const elapsed = Math.floor(
-            (new Date(newArrivalIso).getTime() - new Date(startIso).getTime()) / 1000
-        );
+        const elapsed = computeElapsedSeconds(startIso, newArrivalIso);
         if (elapsed < 0) {
             alert(
                 `L'heure d'arrivée est avant l'heure de départ (${elapsed}s). Vérifie le temps saisi.`

@@ -37,10 +37,14 @@ export function getWaveStartForParticipant(
 
 /**
  * Calcule un temps écoulé (en secondes) entre deux instants ISO.
- * Arrondi à la seconde inférieure.
  */
 export function computeElapsedSeconds(startIso: string, finishIso: string): number {
-    const start = new Date(startIso).getTime();
-    const finish = new Date(finishIso).getTime();
-    return Math.floor((finish - start) / 1000);
+    const startMs = new Date(startIso).getTime();
+    const finishMs = new Date(finishIso).getTime();
+
+    // On passe tout en secondes entières AVANT de soustraire
+    const startSec = Math.floor(startMs / 1000);
+    const finishSec = Math.floor(finishMs / 1000);
+
+    return finishSec - startSec;
 }
