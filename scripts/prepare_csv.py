@@ -127,7 +127,7 @@ def build_teams_dataframe(df: pd.DataFrame, start_bib: int = 1) -> pd.DataFrame:
     """Prend le DataFrame brut (participants) et renvoie le DF format chrono."""
     # dates
     df = df.copy()
-    df[COL_DATE_NAISS] = pd.to_datetime(df[COL_DATE_NAISS], dayfirst=True, errors="coerce")
+    df[COL_DATE_NAISS] = pd.to_datetime(df[COL_DATE_NAISS], dayfirst=False, errors="coerce")
     df["birth_year"] = df[COL_DATE_NAISS].dt.year
     df["indiv_category"] = df["birth_year"].apply(birth_year_to_category)
 
@@ -135,17 +135,12 @@ def build_teams_dataframe(df: pd.DataFrame, start_bib: int = 1) -> pd.DataFrame:
     df = df.sort_values(by=[COL_EQUIPE, COL_ID])
 
     teams_rows = []
-    current_bib = start_bib
 
     for team_name, g in df.groupby(COL_EQUIPE):
         if len(g) != 2:
             raise ValueError(f"⚠️  L'équipe '{team_name}' n'a pas exactement 2 lignes ({len(g)}). Ignorée.")
 
         p1, p2 = g.iloc[0], g.iloc[1]
-
-        # dossard généré
-        bib = current_bib
-        current_bib += 1
 
         competition = safe_str(p1[COL_COMPETITION])
 
@@ -182,7 +177,7 @@ def build_teams_dataframe(df: pd.DataFrame, start_bib: int = 1) -> pd.DataFrame:
 
         teams_rows.append(
             {
-                "bib": bib,
+                # pas de bib ici, on l'ajoute après tri
                 "competition": competition,
                 "teamName": team_name,
                 "teamGender": tg,
@@ -202,6 +197,16 @@ def build_teams_dataframe(df: pd.DataFrame, start_bib: int = 1) -> pd.DataFrame:
         )
 
     out_df = pd.DataFrame(teams_rows)
+
+    # tri par catégorie (ordre défini dans CATS), puis par nom d'équipe
+    out_df["teamCategory"] = pd.Categorical(out_df["teamCategory"], categories=CATS, ordered=True)
+    out_df = out_df.sort_values(by=["teamCategory", "teamName"]).reset_index(drop=True)
+
+    # attribution des dossards après tri -> numéros continus par catégorie
+    out_df["bib"] = range(start_bib, start_bib + len(out_df))
+
+    # repasse en string au cas où (pour le CSV)
+    out_df["teamCategory"] = out_df["teamCategory"].astype(str)
 
     out_df = out_df[
         [

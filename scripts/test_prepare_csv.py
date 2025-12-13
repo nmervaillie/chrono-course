@@ -71,7 +71,7 @@ def make_sample_df():
             "Nom": "Durand",
             "Prénom": "Alice",
             "Sexe": "F",
-            "Date de naissance": "12/06/2017",  # Poussin
+            "Date de naissance": "06/12/2017",  # Poussin
             "Nom du club de la licence fftri": "TriClub A",
         },
         {
@@ -105,7 +105,7 @@ def make_sample_df():
             "Nom": "Blanc",
             "Prénom": "Julie",
             "Sexe": "F",
-            "Date de naissance": "15/05/1990",  # Senior
+            "Date de naissance": "05/15/1990",  # Senior
             "Nom du club de la licence fftri": "TriClub B",
         },
     ]
