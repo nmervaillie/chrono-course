@@ -75,3 +75,11 @@ python -m venv venv
 pip install -r requirements.txt
 python prepare_csv.py
 ```
+
+## Problèmes connus / limitations / améliorations à prévoir
+
+- certains champs dans le fichier CSV des participants contenant des virgules
+- il y a souvent des erreurs dans les inscriptions. Il faudrait pouvoir modifier une équipe avant/apres la course (genre, catégorie...)
+- ne pas bloquer la saisie d'un dossard si deja saisi auparavant => En cas d'erreur de saisie, on voit ca a la fin de la course avec les arbitres
+- pouvoir saisir les arrivées sur un telephone portable, avec un affichage pavé numérique
+- meilleure gestion des inscriptions / paiement de dernière minute ?
