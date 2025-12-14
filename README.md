@@ -1,73 +1,77 @@
-# React + TypeScript + Vite
+# Chronométrage Bike & Run
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application de chronométrage d'épreuves de Bike & Run.
 
-Currently, two official plugins are available:
+Ce projet permet de gérer :
+- l'import de participants
+- une ou plusieurs courses, avec départs par vagues
+- la saisie de l'arrivée des participants
+- les classements scratch, par catégorie et par genre
+- le téléchargement des résultats détaillés 
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Tout fonctionne localement, sans besoin de connexion hormis pour le chargement initial de l'application.
 
-## React Compiler
+## Utilisation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+L'application est dispo en ligne : https://nmervaillie.github.io/chrono-course/
 
-## Expanding the ESLint configuration
+Etapes d'utilisation:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. préparer le fichier des participants
+2. importer ce fichier 
+3. sélectionner une course
+4. démarrer la course
+5. éventuellement, démarrer les vagues additionnelles
+6. saisir les arrivées
+7. corriger les arrivées au besoin
+8. générer les classements et exporter les résultats
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# Préparation du fichier des participants
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Ce fichier peut contenir une ou plusieurs courses. 
+Il est au format CSV et doit contenir les infos suivantes :
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- bib
+- competition
+- teamName
+- teamFullName (ce qui sera affiché dans les classements)
+- teamGender
+- teamCategory
+- nameParticipant1
+- genderParticipant1
+- birthDateParticipant1
+- clubParticipant1
+- licenseParticipant1
+- nameParticipant2
+- genderParticipant2
+- birthDateParticipant2
+- clubParticipant2
+- licenseParticipant2
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+La liste des participants provient généralement du site d'inscription, qui fournit un export de données "brut".
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Cette liste doit être retravaillée pour :
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- regrouper les binômes par leur nom d'équipe
+- calculer la catégorie de chaque participant en fonction de sa date de naissance
+- calculer la catégorie de l'équipe en fonction de la catégorie des participants
+- calculer le genre de l'équipe (M, F, mixte) en fonction du genre des participants
+
+Pour faire ca, on peut utiliser le script de conversion `prepare_csv.py` dans le répertoire `scripts`.
+
+⚠️Ce script doit être adapté chaque année en fonction de l'évolution de la règlementation FFTri.
+
+## Développement
+
+- `npm run build` pour construire l'application 
+- `npm run dev` pour lancer l'application localement en mode développement 
+
+Pour le script de préparation des participants (sous mac)
+
+```bash
+cd scripts
+python -m venv venv
+./venv/bin/activate
+pip install -r requirements.txt
+python prepare_csv.py
 ```
